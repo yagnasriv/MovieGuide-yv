@@ -27,6 +27,8 @@
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value=".MainActivity" />
         </activity>
+        <activity android:name=".Main" />
+
         <provider
             android:authorities="@string/content_authority"
             android:name=".Data.MovieProvider"
