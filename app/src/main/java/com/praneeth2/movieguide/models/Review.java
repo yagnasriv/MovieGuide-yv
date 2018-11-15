@@ -1,4 +1,4 @@
-package com.praneeth2.movieguide.Model;
+package com.praneeth2.movieguide.models;
 
 import org.json.JSONException;
 import org.json.JSONObject;

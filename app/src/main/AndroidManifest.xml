@@ -10,7 +10,7 @@
         android:label="@string/app_name"
         android:theme="@style/AppTheme">
         <activity
-            android:name=".MainActivity"
+            android:name=".Main"
             android:label="@string/app_name"
             android:theme="@style/splashScreenTheme">
             <intent-filter>
@@ -22,16 +22,15 @@
         <activity
             android:name=".DetailActivity"
             android:label="@string/title_activity_detail"
-            android:parentActivityName=".MainActivity" >
+            android:parentActivityName=".Main" >
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
-                android:value=".MainActivity" />
+                android:value=".Main" />
         </activity>
-        <activity android:name=".Main" />
 
         <provider
             android:authorities="@string/content_authority"
-            android:name=".Data.MovieProvider"
+            android:name=".database.MovieProvider"
             android:exported="false" />
     </application>
 

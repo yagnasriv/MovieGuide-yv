@@ -1,4 +1,4 @@
-package com.praneeth2.movieguide.Model;
+package com.praneeth2.movieguide.models;
 
 import android.database.Cursor;
 import android.os.Parcel;
@@ -88,8 +88,7 @@ public class Movie implements Parcelable {
         dest.writeString(date);
     }
 
-    public static final Parcelable.Creator<Movie> CREATOR
-            = new Parcelable.Creator<Movie>() {
+    public static final Parcelable.Creator<Movie> CREATOR = new Parcelable.Creator<Movie>() {
         public Movie createFromParcel(Parcel in) {
             return new Movie(in);
         }

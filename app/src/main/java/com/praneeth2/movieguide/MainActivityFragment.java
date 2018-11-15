@@ -1,13 +1,9 @@
 package com.praneeth2.movieguide;
 
+import android.app.Activity;
 import android.app.Fragment;
-import android.content.Context;
-import android.database.Cursor;
-import android.net.Uri;
-import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -17,28 +13,27 @@ import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.GridView;
 
-import com.praneeth2.movieguide.Adapters.MovieGridAdapter;
-import com.praneeth2.movieguide.Data.MovieContract;
-import com.praneeth2.movieguide.Model.Movie;
+import com.praneeth2.movieguide.adapters.MovieGridAdapter;
+import com.praneeth2.movieguide.database.MovieContract;
+import com.praneeth2.movieguide.models.Movie;
+import com.praneeth2.movieguide.services.Command;
+import com.praneeth2.movieguide.services.VolleyServiceTask;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
 
-public class MainActivityFragment extends Fragment {
+public class MainActivityFragment extends Fragment implements Command {
     private GridView mGridView;
 
     private MovieGridAdapter mMovieGridAdapter;
+
+    private VolleyServiceTask mServiceTask;
+    private View view;
 
     private static final String SORT_SETTING_KEY = "sort_setting";
     private static final String POPULARITY_DESC = "popularity.desc";
@@ -71,6 +66,12 @@ public class MainActivityFragment extends Fragment {
     public static final int COL_DATE = 7;
 
     public MainActivityFragment() {
+    }
+
+    @Override
+    public void execute(String jsonData) throws JSONException {
+        mMovies = (ArrayList<Movie>) getDataFromJson(jsonData);
+        loadScreen(view);
     }
 
     public interface Callback{
@@ -117,7 +118,7 @@ public class MainActivityFragment extends Fragment {
                     item.setChecked(true);
                 }
                 mSortBy = POPULARITY_DESC;
-                updateMovies(mSortBy);
+                mServiceTask.callService(mSortBy);
                 return true;
             case R.id.action_sort_by_rating:
                 if (item.isChecked()) {
@@ -126,7 +127,7 @@ public class MainActivityFragment extends Fragment {
                     item.setChecked(true);
                 }
                 mSortBy = RATING_DESC;
-                updateMovies(mSortBy);
+                mServiceTask.callService(mSortBy);
                 return true;
             case R.id.action_sort_by_favorite:
                 if (item.isChecked()) {
@@ -135,7 +136,7 @@ public class MainActivityFragment extends Fragment {
                     item.setChecked(true);
                 }
                 mSortBy = FAVORITE;
-                updateMovies(mSortBy);
+                mServiceTask.callService(mSortBy);
                 return true;
             default:
                 return super.onOptionsItemSelected(item);
@@ -146,46 +147,14 @@ public class MainActivityFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
 
-        View view = inflater.inflate(R.layout.fragment_main, container, false);
+        view = inflater.inflate(R.layout.movie_layout, container, false);
 
-        mGridView = (GridView) view.findViewById(R.id.gridview_movies);
+        mServiceTask = new VolleyServiceTask(getActivity(), this);
+        mServiceTask.callService(mSortBy);
 
-        mMovieGridAdapter = new MovieGridAdapter(getActivity(), new ArrayList<Movie>());
-
-        mGridView.setAdapter(mMovieGridAdapter);
-
-        mGridView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            @Override
-            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                Movie movie = mMovieGridAdapter.getItem(position);
-                ((Callback) getActivity()).onItemSelected(movie);
-            }
-        });
-
-        if (savedInstanceState != null) {
-            if (savedInstanceState.containsKey(SORT_SETTING_KEY)) {
-                mSortBy = savedInstanceState.getString(SORT_SETTING_KEY);
-            }
-
-            if (savedInstanceState.containsKey(MOVIES_KEY)) {
-                mMovies = savedInstanceState.getParcelableArrayList(MOVIES_KEY);
-                mMovieGridAdapter.setData(mMovies);
-            } else {
-                updateMovies(mSortBy);
-            }
-        } else {
-            updateMovies(mSortBy);
-        }
+//        loadScreen(vie);
 
         return view;
-    }
-
-    private void updateMovies(String sort_by) {
-        if (!sort_by.contentEquals(FAVORITE)) {
-            new FetchMoviesTask().execute(sort_by);
-        } else {
-            new FetchFavoriteMoviesTask(getActivity()).execute();
-        }
     }
 
     @Override
@@ -199,154 +168,56 @@ public class MainActivityFragment extends Fragment {
         super.onSaveInstanceState(outState);
     }
 
-    public class FetchMoviesTask extends AsyncTask<String, Void, List<Movie>> {
 
-        private final String LOG_TAG = FetchMoviesTask.class.getSimpleName();
+    private List<Movie> getDataFromJson(String jsonStr) throws JSONException {
+        JSONObject movieJson = new JSONObject(jsonStr);
+        JSONArray movieArray = movieJson.getJSONArray("results");
 
-        private List<Movie> getMoviesDataFromJson(String jsonStr) throws JSONException {
-            JSONObject movieJson = new JSONObject(jsonStr);
-            JSONArray movieArray = movieJson.getJSONArray("results");
+        List<Movie> results = new ArrayList<>();
 
-            List<Movie> results = new ArrayList<>();
-
-            for(int i = 0; i < movieArray.length(); i++) {
-                JSONObject movie = movieArray.getJSONObject(i);
-                Movie movieModel = new Movie(movie);
-                results.add(movieModel);
-            }
-
-            return results;
+        for(int i = 0; i < movieArray.length(); i++) {
+            JSONObject movie = movieArray.getJSONObject(i);
+            Movie movieModel = new Movie(movie);
+            results.add(movieModel);
         }
 
-        @Override
-        protected List<Movie> doInBackground(String... params) {
-
-            if (params.length == 0) {
-                return null;
-            }
-
-            HttpURLConnection urlConnection = null;
-            BufferedReader reader = null;
-
-            String jsonStr = null;
-
-            try {
-                final String BASE_URL = "http://api.themoviedb.org/3/discover/movie?";
-                final String SORT_BY_PARAM = "sort_by";
-                final String API_KEY_PARAM = "api_key";
-
-                Uri builtUri = Uri.parse(BASE_URL).buildUpon()
-                        .appendQueryParameter(SORT_BY_PARAM, params[0])
-                        .appendQueryParameter(API_KEY_PARAM, getString(R.string.tmdb_api_key))
-                        .build();
-
-                URL url = new URL(builtUri.toString());
-
-                urlConnection = (HttpURLConnection) url.openConnection();
-                urlConnection.setRequestMethod("GET");
-                urlConnection.connect();
-
-                InputStream inputStream = urlConnection.getInputStream();
-                StringBuffer buffer = new StringBuffer();
-                if (inputStream == null) {
-                    return null;
-                }
-                reader = new BufferedReader(new InputStreamReader(inputStream));
-
-                String line;
-                while ((line = reader.readLine()) != null) {
-                    // Since it's JSON, adding a newline isn't necessary (it won't affect parsing)
-                    // But it does make debugging a *lot* easier if you print out the completed
-                    // buffer for debugging.
-                    buffer.append(line + "\n");
-                }
-
-                if (buffer.length() == 0) {
-                    return null;
-                }
-                jsonStr = buffer.toString();
-            } catch (IOException e) {
-                Log.e(LOG_TAG, "Error ", e);
-                return null;
-            } finally {
-                if (urlConnection != null) {
-                    urlConnection.disconnect();
-                }
-                if (reader != null) {
-                    try {
-                        reader.close();
-                    } catch (final IOException e) {
-                        Log.e(LOG_TAG, "Error closing stream", e);
-                    }
-                }
-            }
-
-            try {
-                return getMoviesDataFromJson(jsonStr);
-            } catch (JSONException e) {
-                Log.e(LOG_TAG, e.getMessage(), e);
-                e.printStackTrace();
-            }
-
-            // This will only happen if there was an error getting or parsing the forecast.
-            return null;
-        }
-
-        @Override
-        protected void onPostExecute(List<Movie> movies) {
-            if (movies != null) {
-                if (mMovieGridAdapter != null) {
-                    mMovieGridAdapter.setData(movies);
-                }
-                mMovies = new ArrayList<>();
-                mMovies.addAll(movies);
-            }
-        }
+        return results;
     }
 
-    public class FetchFavoriteMoviesTask extends AsyncTask<Void, Void, List<Movie>> {
-
-        private Context mContext;
-
-        public FetchFavoriteMoviesTask(Context context) {
-            mContext = context;
-        }
-
-        private List<Movie> getFavoriteMoviesDataFromCursor(Cursor cursor) {
-            List<Movie> results = new ArrayList<>();
-            if (cursor != null && cursor.moveToFirst()) {
-                do {
-                    Movie movie = new Movie(cursor);
-                    results.add(movie);
-                } while (cursor.moveToNext());
-                cursor.close();
-            }
-            return results;
-        }
-
-        @Override
-        protected List<Movie> doInBackground(Void... params) {
-            Cursor cursor = mContext.getContentResolver().query(
-                    MovieContract.MovieEntry.CONTENT_URI,
-                    MOVIE_COLUMNS,
-                    null,
-                    null,
-                    null
-            );
-            return getFavoriteMoviesDataFromCursor(cursor);
-        }
-
-        @Override
-        protected void onPostExecute(List<Movie> movies) {
-            if (movies != null) {
-                if (mMovieGridAdapter != null) {
-                    mMovieGridAdapter.setData(movies);
-                }
-                mMovies = new ArrayList<>();
-                mMovies.addAll(movies);
-            }
-        }
+    Activity getMainActivity() {
+        return getActivity();
     }
 
+    void loadScreen(View view) {
 
+        mGridView = view.findViewById(R.id.grid_view_movies);
+
+        mMovieGridAdapter = new MovieGridAdapter(getActivity(), mMovies);
+
+        mGridView.setAdapter(mMovieGridAdapter);
+
+        mGridView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                Movie movie = mMovieGridAdapter.getItem(position);
+                ((Callback) getActivity()).onItemSelected(movie);
+            }
+        });
+
+//        if (savedInstanceState != null) {
+//            if (savedInstanceState.containsKey(SORT_SETTING_KEY)) {
+//                mSortBy = savedInstanceState.getString(SORT_SETTING_KEY);
+//            }
+//
+//            if (savedInstanceState.containsKey(MOVIES_KEY)) {
+//                mMovies = savedInstanceState.getParcelableArrayList(MOVIES_KEY);
+//                mMovieGridAdapter.setData(mMovies);
+//            } else {
+//                mServiceTask.callService(mSortBy);
+//            }
+//        } else {
+//            mServiceTask.callService(mSortBy);
+//        }
+
+    }
 }

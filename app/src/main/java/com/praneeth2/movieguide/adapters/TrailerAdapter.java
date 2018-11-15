@@ -1,27 +1,28 @@
-package com.praneeth2.movieguide.Adapters;
+package com.praneeth2.movieguide.adapters;
 
 import android.content.Context;
-import android.text.Html;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
+import android.widget.ImageView;
 import android.widget.TextView;
 
-import com.praneeth2.movieguide.Model.Review;
+import com.bumptech.glide.Glide;
+import com.praneeth2.movieguide.models.Trailer;
 import com.praneeth2.movieguide.R;
 
 import java.util.List;
 
-public class ReviewAdapter extends BaseAdapter {
+public class TrailerAdapter extends BaseAdapter {
 
     private final Context mContext;
     private final LayoutInflater mInflater;
-    private final Review mLock = new Review();
+    private final Trailer mLock = new Trailer();
 
-    private List<Review> mObjects;
+    private List<Trailer> mObjects;
 
-    public ReviewAdapter(Context context, List<Review> objects) {
+    public TrailerAdapter(Context context, List<Trailer> objects) {
         mContext = context;
         mInflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
         mObjects = objects;
@@ -31,7 +32,7 @@ public class ReviewAdapter extends BaseAdapter {
         return mContext;
     }
 
-    public void add(Review object) {
+    public void add(Trailer object) {
         synchronized (mLock) {
             mObjects.add(object);
         }
@@ -51,7 +52,7 @@ public class ReviewAdapter extends BaseAdapter {
     }
 
     @Override
-    public Review getItem(int position) {
+    public Trailer getItem(int position) {
         return mObjects.get(position);
     }
 
@@ -66,28 +67,30 @@ public class ReviewAdapter extends BaseAdapter {
         ViewHolder viewHolder;
 
         if (view == null) {
-            view = mInflater.inflate(R.layout.item_movie_review, parent, false);
+            view = mInflater.inflate(R.layout.item_movie_trailer, parent, false);
             viewHolder = new ViewHolder(view);
             view.setTag(viewHolder);
         }
 
-        final Review review = getItem(position);
+        final Trailer trailer = getItem(position);
 
         viewHolder = (ViewHolder) view.getTag();
 
-        viewHolder.authorView.setText(review.getAuthor());
-        viewHolder.contentView.setText(Html.fromHtml(review.getContent()));
+        String yt_thumbnail_url = "http://img.youtube.com/vi/" + trailer.getKey() + "/0.jpg";
+        Glide.with(getContext()).load(yt_thumbnail_url).into(viewHolder.imageView);
+
+        viewHolder.nameView.setText(trailer.getName());
 
         return view;
     }
 
     public static class ViewHolder {
-        public final TextView authorView;
-        public final TextView contentView;
+        public final ImageView imageView;
+        public final TextView nameView;
 
         public ViewHolder(View view) {
-            authorView = (TextView) view.findViewById(R.id.review_author);
-            contentView = (TextView) view.findViewById(R.id.review_content);
+            imageView = (ImageView) view.findViewById(R.id.trailer_image);
+            nameView = (TextView) view.findViewById(R.id.trailer_name);
         }
     }
 

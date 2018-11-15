@@ -1,8 +1,11 @@
-package com.praneeth2.movieguide;
+package com.praneeth2.movieguide.fragments;
 
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+
+import com.praneeth2.movieguide.MainFragment;
+import com.praneeth2.movieguide.R;
 
 /**
  * Created by Praneeth on 10/5/18.

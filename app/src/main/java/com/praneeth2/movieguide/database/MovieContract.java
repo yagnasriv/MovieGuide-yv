@@ -1,4 +1,4 @@
-package com.praneeth2.movieguide.Data;
+package com.praneeth2.movieguide.database;
 
 import android.content.ContentResolver;
 import android.content.ContentUris;

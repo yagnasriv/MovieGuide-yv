@@ -24,12 +24,12 @@ import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
 import com.linearlistview.LinearListView;
-import com.praneeth2.movieguide.Adapters.ReviewAdapter;
-import com.praneeth2.movieguide.Adapters.TrailerAdapter;
-import com.praneeth2.movieguide.Data.MovieContract;
-import com.praneeth2.movieguide.Model.Movie;
-import com.praneeth2.movieguide.Model.Review;
-import com.praneeth2.movieguide.Model.Trailer;
+import com.praneeth2.movieguide.adapters.ReviewAdapter;
+import com.praneeth2.movieguide.adapters.TrailerAdapter;
+import com.praneeth2.movieguide.database.MovieContract;
+import com.praneeth2.movieguide.models.Movie;
+import com.praneeth2.movieguide.models.Review;
+import com.praneeth2.movieguide.models.Trailer;
 
 import org.json.JSONArray;
 import org.json.JSONException;

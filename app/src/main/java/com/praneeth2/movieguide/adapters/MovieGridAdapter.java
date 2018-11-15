@@ -1,4 +1,4 @@
-package com.praneeth2.movieguide.Adapters;
+package com.praneeth2.movieguide.adapters;
 
 import android.content.Context;
 import android.view.LayoutInflater;
@@ -9,20 +9,22 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.bumptech.glide.Glide;
-import com.praneeth2.movieguide.Model.Trailer;
+import com.praneeth2.movieguide.models.Movie;
 import com.praneeth2.movieguide.R;
 
 import java.util.List;
 
-public class TrailerAdapter extends BaseAdapter {
+
+public class MovieGridAdapter extends BaseAdapter {
 
     private final Context mContext;
     private final LayoutInflater mInflater;
-    private final Trailer mLock = new Trailer();
 
-    private List<Trailer> mObjects;
+    private final Movie mLock = new Movie();
 
-    public TrailerAdapter(Context context, List<Trailer> objects) {
+    private List<Movie> mObjects;
+
+    public MovieGridAdapter(Context context, List<Movie> objects) {
         mContext = context;
         mInflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
         mObjects = objects;
@@ -32,7 +34,7 @@ public class TrailerAdapter extends BaseAdapter {
         return mContext;
     }
 
-    public void add(Trailer object) {
+    public void add(Movie object) {
         synchronized (mLock) {
             mObjects.add(object);
         }
@@ -46,13 +48,20 @@ public class TrailerAdapter extends BaseAdapter {
         notifyDataSetChanged();
     }
 
+    public void setData(List<Movie> data) {
+        clear();
+        for (Movie movie : data) {
+            add(movie);
+        }
+    }
+
     @Override
     public int getCount() {
         return mObjects.size();
     }
 
     @Override
-    public Trailer getItem(int position) {
+    public Movie getItem(int position) {
         return mObjects.get(position);
     }
 
@@ -67,31 +76,30 @@ public class TrailerAdapter extends BaseAdapter {
         ViewHolder viewHolder;
 
         if (view == null) {
-            view = mInflater.inflate(R.layout.item_movie_trailer, parent, false);
+            view = mInflater.inflate(R.layout.grid_item_movie, parent, false);
             viewHolder = new ViewHolder(view);
             view.setTag(viewHolder);
         }
 
-        final Trailer trailer = getItem(position);
+        final Movie movie = getItem(position);
+
+        String image_url = "http://image.tmdb.org/t/p/w185" + movie.getImage();
 
         viewHolder = (ViewHolder) view.getTag();
 
-        String yt_thumbnail_url = "http://img.youtube.com/vi/" + trailer.getKey() + "/0.jpg";
-        Glide.with(getContext()).load(yt_thumbnail_url).into(viewHolder.imageView);
-
-        viewHolder.nameView.setText(trailer.getName());
+        Glide.with(getContext()).load(image_url).into(viewHolder.imageView);
+        viewHolder.titleView.setText(movie.getTitle());
 
         return view;
     }
 
     public static class ViewHolder {
         public final ImageView imageView;
-        public final TextView nameView;
+        public final TextView titleView;
 
         public ViewHolder(View view) {
-            imageView = (ImageView) view.findViewById(R.id.trailer_image);
-            nameView = (TextView) view.findViewById(R.id.trailer_name);
+            imageView = (ImageView) view.findViewById(R.id.grid_item_image);
+            titleView = (TextView) view.findViewById(R.id.grid_item_title);
         }
     }
-
 }

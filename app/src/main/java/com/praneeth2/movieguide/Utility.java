@@ -3,7 +3,7 @@ package com.praneeth2.movieguide;
 import android.content.Context;
 import android.database.Cursor;
 
-import com.praneeth2.movieguide.Data.MovieContract;
+import com.praneeth2.movieguide.database.MovieContract;
 
 
 public class Utility {

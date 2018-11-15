@@ -1,4 +1,4 @@
-package com.praneeth2.movieguide.Data;
+package com.praneeth2.movieguide.database;
 
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;

@@ -4,7 +4,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 
-import com.praneeth2.movieguide.Model.Movie;
+import com.praneeth2.movieguide.models.Movie;
 
 public class MainActivity extends AppCompatActivity implements MainActivityFragment.Callback {
 
